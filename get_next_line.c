@@ -6,54 +6,84 @@
 /*   By: vfelix-d <vfelix-d@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/26 10:22:48 by vfelix-d          #+#    #+#             */
-/*   Updated: 2025/01/01 19:22:32 by vfelix-d         ###   ########.fr       */
+/*   Updated: 2025/01/02 10:41:15 by vfelix-d         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*get_first_line(char *file)
+char	*get_line_from_buffer(char *buffer)
 {
 	int		i;
-	char	*res;
+	char	*line;
 
 	i = 0;
-	if (!file)
+	if (!buffer[i])
 		return (NULL);
-	while (file[i] && file[i] != '\n')
+	while (buffer[i] && buffer[i] != '\n')
 		i++;
-	res = (char *)malloc((i + 2) * sizeof(char));
-	if (!res)
+	line = (char *)malloc((i + 2) * sizeof(char));
+	if (!line)
 		return (NULL);
 	i = 0;
-	while (file[i] && file[i] != '\n')
+	while (buffer[i] && buffer[i] != '\n')
 	{
-		res[i] = file[i];
+		line[i] = buffer[i];
 		i++;
 	}
-	if (file[i] == '\n')
-		res[i++] = '\n';
-	res[i] = '\0';
-	return (res);
+	if (buffer[i] == '\n')
+		line[i++] = '\n';
+	line[i] = '\0';
+	return (line);
 }
 
-char	*reading_buff(int fd)
+char	*update_buffer(char *buffer)
 {
-	char	*buffer;
-	int		sz;
+	int		i;
+	int		j;
+	char	*new_buffer;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (NULL);
-	buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (!buffer)
-		return (NULL);
-	sz = read(fd, buffer, BUFFER_SIZE);
-	if (sz <= 0)
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
 	{
 		free(buffer);
 		return (NULL);
 	}
-	buffer[sz] = '\0';
+	new_buffer = (char *)malloc((ft_strlen(buffer) - i + 1) * sizeof(char));
+	if (!new_buffer)
+		return (NULL);
+	i++;
+	j = 0;
+	while (buffer[i])
+		new_buffer[j++] = buffer[i++];
+	new_buffer[j] = '\0';
+	free(buffer);
+	return (new_buffer);
+}
+
+char	*read_and_store(int fd, char *buffer)
+{
+	char	*temp_buffer;
+	int		bytes_read;
+
+	temp_buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!temp_buffer)
+		return (NULL);
+	bytes_read = 1;
+	while (!ft_strchr(buffer, '\n') && bytes_read > 0)
+	{
+		bytes_read = read(fd, temp_buffer, BUFFER_SIZE);
+		if (bytes_read == -1)
+		{
+			free(temp_buffer);
+			return (NULL);
+		}
+		temp_buffer[bytes_read] = '\0';
+		buffer = ft_strjoin(buffer, temp_buffer);
+	}
+	free(temp_buffer);
 	return (buffer);
 }
 
@@ -61,49 +91,13 @@ char	*get_next_line(int fd)
 {
 	static char	*buffer;
 	char		*line;
-	char		*temp;
-	char		*new_buffer;
 
 	if (fd < 0 || BUFFER_SIZE <= 0)
 		return (NULL);
-	if (!buffer)
-		buffer = reading_buff(fd);
+	buffer = read_and_store(fd, buffer);
 	if (!buffer)
 		return (NULL);
-	line = get_first_line(buffer);
-	if (!line)
-		return (free_and_return(&buffer, NULL));
-	temp = ft_strstr(buffer, line);
-	if (!temp || temp[ft_strlen(line)] == '\0')
-		return (free_and_return(&buffer, line));
-	new_buffer = ft_strdup(&temp[ft_strlen(line)]);
-	if (!new_buffer)
-		return (free_and_return(&buffer, line));
-	free(buffer);
-	buffer = new_buffer;
+	line = get_line_from_buffer(buffer);
+	buffer = update_buffer(buffer);
 	return (line);
-}
-
-#include <fcntl.h>
-#include <stdio.h>
-
-int main(void)
-{
-    int fd = open("teste.txt", O_RDONLY); // Abra um arquivo chamado "test.txt"
-    char *line;
-
-    if (fd < 0)
-    {
-        perror("Erro ao abrir o arquivo");
-        return (1);
-    }
-
-    while ((line = get_next_line(fd)) != NULL)
-    {
-        printf("%s", line); // Imprime a linha extraída
-        free(line);         // Libera a memória da linha após uso
-    }
-
-    close(fd); // Fecha o arquivo
-    return (0);
 }

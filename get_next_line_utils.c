@@ -6,71 +6,58 @@
 /*   By: vfelix-d <vfelix-d@student.42.rio>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/26 10:25:05 by vfelix-d          #+#    #+#             */
-/*   Updated: 2025/01/01 19:19:18 by vfelix-d         ###   ########.fr       */
+/*   Updated: 2025/01/02 11:54:20 by vfelix-d         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*free_and_return(char **buffer, char *ret)
-{
-	if (buffer && *buffer)
-	{
-		free(*buffer);
-		*buffer = NULL;
-	}
-	return (ret);
-}
-
-int	ft_strlen(char *str)
+int	ft_strlen(const char *str)
 {
 	int	i;
 
 	i = 0;
 	while (str && str[i])
-	{
 		i++;
-	}
 	return (i);
 }
 
-char	*ft_strstr(char *str, char *to_find)
+char	*ft_strchr(const char *s, int c)
 {
-	int	i;
-	int	j;
-
-	i = 0;
-	j = 0;
-	if (!to_find[0])
-		return (str);
-	while (str[i])
+	if (!s)
+		return (NULL);
+	while (*s)
 	{
-		while (str[i + j] == to_find[j] && to_find[j])
-			j++;
-		if (!to_find[j])
-			return (&str[i]);
-		j = 0;
-		i++;
+		if (*s == (char)c)
+			return ((char *)s);
+		s++;
 	}
+	if (c == '\0')
+		return ((char *)s);
 	return (NULL);
 }
 
-char	*ft_strdup(char *src)
+char	*ft_strjoin(char *s1, char *s2)
 {
-	char	*dup;
+	char	*joined;
 	int		i;
+	int		j;
 
+	if (!s1 && !s2)
+		return (NULL);
 	i = 0;
-	if (!src)
+	j = 0;
+	joined = (char *)malloc((ft_strlen(s1) + ft_strlen(s2) + 1) * sizeof(char));
+	if (!joined)
 		return (NULL);
-	dup = (char *)malloc((ft_strlen(src) + 1) * sizeof(char));
-	if (!dup)
-		return (NULL);
-	while (src[i])
+	while (s1 && s1[i])
 	{
-		dup[i] = src[i];
+		joined[i] = s1[i];
 		i++;
 	}
-	dup[i] = '\0';
-	return (dup);
+	while (s2 && s2[j])
+		joined[i++] = s2[j++];
+	joined[i] = '\0';
+	free(s1);
+	return (joined);
 }
